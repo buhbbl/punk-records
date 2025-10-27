@@ -85,8 +85,15 @@ Object mapping lowercased name -> list of IDs
 
 ### Manifest (manifest.json)
 
-```JSON
-{ "language": "<lang>", "generated_at": <unix_ts>, "split_per_card": bool, "images": bool, "source": "vegapull", "version": "1" }
+```
+{ 
+  "language": "<lang>", 
+  "generated_at": <unix_ts>, "split_per_card": bool, "images": bool, "source": "vegapull", "version": "1" }
+  "split_per_card": bool, 
+  "images": bool, 
+  "source": "vegapull", 
+  "version": "1" 
+}
 ```
 
 ## How To Generate the Data
