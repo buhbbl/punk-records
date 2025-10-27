@@ -88,7 +88,7 @@ Object mapping lowercased name -> list of IDs
 ```
 { 
   "language": "<lang>", 
-  "generated_at": <unix_ts>, "split_per_card": bool, "images": bool, "source": "vegapull", "version": "1" }
+  "generated_at": <unix_ts>,
   "split_per_card": bool, 
   "images": bool, 
   "source": "vegapull", 
