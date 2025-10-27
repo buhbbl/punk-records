@@ -77,7 +77,7 @@ punk-records/
 
 ### Index (index/cards_by_id.json)
 
-Object mapping id -> { name, pack_id, rarity, colors }
+Object mapping id -> `{ name, pack_id, rarity, colors }`
 
 ### Index (index/by_name.json)
 
@@ -85,7 +85,9 @@ Object mapping lowercased name -> list of IDs
 
 ### Manifest (manifest.json)
 
+```JSON
 { "language": "<lang>", "generated_at": <unix_ts>, "split_per_card": bool, "images": bool, "source": "vegapull", "version": "1" }
+```
 
 ## How To Generate the Data
 
