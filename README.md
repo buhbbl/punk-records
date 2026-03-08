@@ -110,7 +110,7 @@ You can generate the data yourself using the [vegapull](https://github.com/Coko7
 ```bash
 git clone https://github.com/buhbbl/punk-records.git
 cd punk-records
-python build_punk_records.py --language english --out-dir punk-records
+python build_punk_records.py --language english --out-dir .
 # Optional:
 #   --split-per-card   also write per-card JSON files
 #   --images           also download images per pack
