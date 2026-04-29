@@ -1,6 +1,7 @@
 """Build punk-records JSON using vegapull."""
 import argparse
 import json
+import logging
 import os
 import shutil
 import subprocess
@@ -8,6 +9,8 @@ import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
+
+logger = logging.getLogger("punk-records")
 
 
 def run(cmd, out_path=None):
@@ -28,7 +31,7 @@ def stable_dump(obj) -> str:
 
 def build_language(args, lang):
     """Build punk-records for a single language."""
-    print(f"Building punk-records for language: {lang}")
+    logger.info("Building punk-records for language: %s", lang)
     lang_dir = Path(args.out_dir) / lang
     data_dir = lang_dir / "data"
     cards_dir = lang_dir / "cards"
@@ -42,15 +45,15 @@ def build_language(args, lang):
     index_dir.mkdir(parents=True, exist_ok=True)
 
     # 1) Packs
-    print(f"Fetching packs ({lang})...")
+    logger.debug("Fetching packs (%s)...", lang)
     run([args.vegapull, "pull", "--language", lang, "--output", lang_dir, "packs"])
     packs_json_path = lang_dir / "json" / "packs.json"
     packs = json.loads(packs_json_path.read_text(encoding="utf-8"))
-    print(f"Found {len(packs)} packs.")
-    
+    logger.info("Found %d packs.", len(packs))
+
     # Move packs JSON to root dir
     if (lang_dir / "packs.json").exists():
-        print(f"Warning: {lang_dir / 'packs.json'} already exists, overwriting.")
+        logger.warning("%s already exists, overwriting.", lang_dir / "packs.json")
         os.remove(lang_dir / "packs.json")
     packs_json_path.rename(lang_dir / "packs.json")
 
@@ -60,10 +63,10 @@ def build_language(args, lang):
 
     for i, pack in enumerate(packs.values(), 1):
         pack_id = pack["id"]
-        print(f"[{i}/{len(packs)}] Fetching cards for {pack_id}...")
-        
+        logger.debug("[%d/%d] Fetching cards for %s...", i, len(packs), pack_id)
+
         if os.path.exists(data_dir / f"{pack_id}.json") and not args.clean:
-            print(f"Skipping {pack_id}, already exists.")
+            logger.debug("Skipping %s, already exists.", pack_id)
             pack_json_path = data_dir / f"{pack_id}.json"
             cards = json.loads(pack_json_path.read_text(encoding="utf-8"))
         else:
@@ -76,8 +79,8 @@ def build_language(args, lang):
                 (cards_dir / pack_id).mkdir(parents=True, exist_ok=True)
                 for card in cards:
                     single_path = cards_dir / pack_id / f"{card['id']}.json"
-                    single_path.write_text(stable_dump(card), encoding="utf-8")      
-            
+                    single_path.write_text(stable_dump(card), encoding="utf-8")
+
             # Move JSON to data dir
             out_file.rename(data_dir / f"{pack_id}.json")
 
@@ -107,14 +110,14 @@ def build_language(args, lang):
         "source": "vegapull",
         "version": "2.0",
     }), encoding="utf-8")
-    
+
     # Cleanup vegapull's json dir
     vegapull_json_dir = lang_dir / "json"
     if vegapull_json_dir.exists():
         shutil.rmtree(vegapull_json_dir)
         os.remove(lang_dir / "vega.meta.toml")
 
-    print(f"Done. Wrote JSON records to {lang_dir}")
+    logger.info("Done. Wrote JSON records to %s", lang_dir)
 
 def main():
     """Main entry point."""
@@ -124,7 +127,14 @@ def main():
     parser.add_argument("--out-dir", default="punk-records", help="Output root directory")
     parser.add_argument("--clean", action="store_true", help="Delete existing language dir before writing")
     parser.add_argument("--split-per-card", action="store_true", help="Also write one JSON file per card")
+    parser.add_argument("--verbose", action="store_true", help="Enable debug-level logging")
     args = parser.parse_args()
+
+    logging.basicConfig(
+        level=logging.DEBUG if args.verbose else logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
 
     # Check vegapull is callable
     try:
@@ -144,4 +154,5 @@ if __name__ == "__main__":
     start_time = time.time()
     main()
     end_time = time.time()
-    print(f"Built punk-records in {datetime.fromtimestamp(end_time - start_time, tz=timezone.utc).strftime('%H:%M:%S.%f')[:-3]}")
+    elapsed = datetime.fromtimestamp(end_time - start_time, tz=timezone.utc).strftime('%H:%M:%S.%f')[:-3]
+    logger.info("Built punk-records in %s", elapsed)
