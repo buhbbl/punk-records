@@ -51,11 +51,11 @@ def build_language(args, lang):
     packs = json.loads(packs_json_path.read_text(encoding="utf-8"))
     logger.info("Found %d packs.", len(packs))
 
-    # Move packs JSON to root dir
+    # Move packs JSON to root dir — re-serialize for stable key ordering
     if (lang_dir / "packs.json").exists():
         logger.warning("%s already exists, overwriting.", lang_dir / "packs.json")
         os.remove(lang_dir / "packs.json")
-    packs_json_path.rename(lang_dir / "packs.json")
+    (lang_dir / "packs.json").write_text(stable_dump(packs), encoding="utf-8")
 
     # 2) Cards per pack
     cards_by_id = {}
@@ -81,8 +81,8 @@ def build_language(args, lang):
                     single_path = cards_dir / pack_id / f"{card['id']}.json"
                     single_path.write_text(stable_dump(card), encoding="utf-8")
 
-            # Move JSON to data dir
-            out_file.rename(data_dir / f"{pack_id}.json")
+            # Re-serialize to data dir with stable key ordering
+            (data_dir / f"{pack_id}.json").write_text(stable_dump(cards), encoding="utf-8")
 
         # Build indices
         for card in cards:
