@@ -61,7 +61,7 @@ def build_language(args, lang):
     cards_by_id = {}
     by_name = {}
 
-    for i, pack in enumerate(packs.values(), 1):
+    for i, (_, pack) in enumerate(sorted(packs.items(), key=lambda x: x[0]), 1):
         pack_id = pack["id"]
         logger.debug("[%d/%d] Fetching cards for %s...", i, len(packs), pack_id)
 
