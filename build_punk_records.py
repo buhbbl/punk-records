@@ -27,7 +27,7 @@ def run(cmd, out_path=None):
 
 def stable_dump(obj) -> str:
     """Dump JSON with consistent formatting."""
-    return json.dumps(obj, ensure_ascii=False, separators=(",", ":"), sort_keys=False)
+    return json.dumps(obj, ensure_ascii=False, separators=(",", ":"), sort_keys=True)
 
 def build_language(args, lang):
     """Build punk-records for a single language."""
@@ -102,6 +102,8 @@ def build_language(args, lang):
 
     # 3) Indices and manifest
     (index_dir / "cards_by_id.json").write_text(stable_dump(cards_by_id), encoding="utf-8")
+    # Sort card ID arrays so index is stable across runs with varying pack order
+    by_name = {k: sorted(v) for k, v in by_name.items()}
     (index_dir / "by_name.json").write_text(stable_dump(by_name), encoding="utf-8")
     (lang_dir / "manifest.json").write_text(stable_dump({
         "language": lang,
