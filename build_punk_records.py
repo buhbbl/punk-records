@@ -94,7 +94,9 @@ def build_language(args, lang):
                 "cost": card.get("cost"),
                 "category": card.get("category"),
                 "power": card.get("power"),
-                "counter": card.get("counter")
+                "counter": card.get("counter"),
+                "types": card.get("types"),
+                "attributes": card.get("attributes")
             }
             key = (card.get("name") or "").strip().lower()
             if key:
