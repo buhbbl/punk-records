@@ -12,7 +12,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 logger = logging.getLogger("punk-records")
-
+keyword_extract_pattern = r'\[(rush(?:: ?character)?|double attack|banish|blocker|trigger|unblockable|activate: main|main|counter|when attacking|on play|on block|on your opponent\'s attack|on k\.o\.|end of your turn|end of your opponent\'s turn|your turn|opponent\'s turn|once per turn|don!! x(?:10|[1-9]))\]'
 
 def run(cmd, out_path=None):
     """Run a command and optionally write its stdout to out_path."""
@@ -34,7 +34,10 @@ def extract_effect_keywords(effect_text):
     """Extract keywords from effect text using regex."""
     if not effect_text:
         return []
-    return re.findall(r"\[(.*?)\]", effect_text)
+    normalized_text = effect_text.replace('\u2212', '-').replace('\u2019', "'").replace('\u2018', "'")
+    bracketed = re.findall(keyword_extract_pattern, normalized_text, flags=re.IGNORECASE)
+    don_minus = re.findall(r'don!! -(?:10|[1-9])', normalized_text, flags=re.IGNORECASE)
+    return [keyword for keyword in bracketed + don_minus if keyword.strip()]
 
 def build_language(args, lang):
     """Build punk-records for a single language."""
