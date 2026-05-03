@@ -3,6 +3,7 @@ import argparse
 import json
 import logging
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -28,6 +29,12 @@ def run(cmd, out_path=None):
 def stable_dump(obj) -> str:
     """Dump JSON with consistent formatting."""
     return json.dumps(obj, ensure_ascii=False, separators=(",", ":"), sort_keys=True)
+
+def extract_effect_keywords(effect_text):
+    """Extract keywords from effect text using regex."""
+    if not effect_text:
+        return []
+    return re.findall(r"\[(.*?)\]", effect_text)
 
 def build_language(args, lang):
     """Build punk-records for a single language."""
@@ -96,7 +103,8 @@ def build_language(args, lang):
                 "power": card.get("power"),
                 "counter": card.get("counter"),
                 "types": card.get("types"),
-                "attributes": card.get("attributes")
+                "attributes": card.get("attributes"),
+                "keywords": extract_effect_keywords(card.get("effect", "")),
             }
             key = (card.get("name") or "").strip().lower()
             if key:
