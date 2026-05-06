@@ -107,6 +107,7 @@ def build_language(args, lang):
                 "counter": card.get("counter"),
                 "types": card.get("types"),
                 "attributes": card.get("attributes"),
+                "rarity": card.get("rarity"),
                 "keywords": extract_effect_keywords(card.get("effect", "")),
             }
             key = (card.get("name") or "").strip().lower()
