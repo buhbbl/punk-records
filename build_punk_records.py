@@ -1,4 +1,5 @@
 """Build punk-records JSON using vegapull."""
+
 import argparse
 import json
 import logging
@@ -12,7 +13,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 logger = logging.getLogger("punk-records")
-keyword_extract_pattern = r'\[(rush(?:: ?character)?|double attack|banish|blocker|trigger|unblockable|activate: main|main|counter|when attacking|on play|on block|on your opponent\'s attack|on k\.o\.|end of your turn|end of your opponent\'s turn|your turn|opponent\'s turn|once per turn|don!! x(?:10|[1-9]))\]'
+keyword_extract_pattern = r"\[(rush(?:: ?character)?|double attack|banish|blocker|trigger|unblockable|activate: main|main|counter|when attacking|on play|on block|on your opponent\'s attack|on k\.o\.|end of your turn|end of your opponent\'s turn|your turn|opponent\'s turn|once per turn|don!! x(?:10|[1-9]))\]"
+
 
 def run(cmd, out_path=None):
     """Run a command and optionally write its stdout to out_path."""
@@ -26,18 +28,21 @@ def run(cmd, out_path=None):
         return None
     return proc.stdout
 
+
 def stable_dump(obj) -> str:
     """Dump JSON with consistent formatting."""
     return json.dumps(obj, ensure_ascii=False, separators=(",", ":"), sort_keys=True)
+
 
 def extract_effect_keywords(effect_text):
     """Extract keywords from effect text using regex."""
     if not effect_text:
         return []
-    normalized_text = effect_text.replace('\u2212', '-').replace('\u2019', "'").replace('\u2018', "'")
+    normalized_text = effect_text.replace("\u2212", "-").replace("\u2019", "'").replace("\u2018", "'")
     bracketed = re.findall(keyword_extract_pattern, normalized_text, flags=re.IGNORECASE)
-    don_minus = re.findall(r'don!! -(?:10|[1-9])', normalized_text, flags=re.IGNORECASE)
+    don_minus = re.findall(r"don!! -(?:10|[1-9])", normalized_text, flags=re.IGNORECASE)
     return [keyword for keyword in bracketed + don_minus if keyword.strip()]
+
 
 def build_language(args, lang):
     """Build punk-records for a single language."""
@@ -46,9 +51,6 @@ def build_language(args, lang):
     data_dir = lang_dir / "data"
     cards_dir = lang_dir / "cards"
     index_dir = lang_dir / "index"
-
-    if args.clean and lang_dir.exists():
-        shutil.rmtree(lang_dir)
 
     lang_dir.mkdir(parents=True, exist_ok=True)
     data_dir.mkdir(parents=True, exist_ok=True)
@@ -75,7 +77,7 @@ def build_language(args, lang):
         pack_id = pack["id"]
         logger.debug("[%d/%d] Fetching cards for %s...", i, len(packs), pack_id)
 
-        if os.path.exists(data_dir / f"{pack_id}.json") and not args.clean:
+        if os.path.exists(data_dir / f"{pack_id}.json") and not args.overwrite:
             logger.debug("Skipping %s, already exists.", pack_id)
             pack_json_path = data_dir / f"{pack_id}.json"
             cards = json.loads(pack_json_path.read_text(encoding="utf-8"))
@@ -119,13 +121,18 @@ def build_language(args, lang):
     # Sort card ID arrays so index is stable across runs with varying pack order
     by_name = {k: sorted(v) for k, v in by_name.items()}
     (index_dir / "by_name.json").write_text(stable_dump(by_name), encoding="utf-8")
-    (lang_dir / "manifest.json").write_text(stable_dump({
-        "language": lang,
-        "generated_at": int(time.time()),
-        "split_per_card": args.split_per_card,
-        "source": "vegapull",
-        "version": "2.0",
-    }), encoding="utf-8")
+    (lang_dir / "manifest.json").write_text(
+        stable_dump(
+            {
+                "language": lang,
+                "generated_at": int(time.time()),
+                "split_per_card": args.split_per_card,
+                "source": "vegapull",
+                "version": "2.0",
+            }
+        ),
+        encoding="utf-8",
+    )
 
     # Cleanup vegapull's json dir
     vegapull_json_dir = lang_dir / "json"
@@ -135,13 +142,14 @@ def build_language(args, lang):
 
     logger.info("Done. Wrote JSON records to %s", lang_dir)
 
+
 def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(description="Build punk-records JSON using vegapull.")
     parser.add_argument("--vegapull", default="vega", help="Path to vegapull binary (or name in PATH)")
     parser.add_argument("--language", default="all", help="Locale (english, english-asia, japanese, etc.)")
     parser.add_argument("--out-dir", default="punk-records", help="Output root directory")
-    parser.add_argument("--clean", action="store_true", help="Delete existing language dir before writing")
+    parser.add_argument("--overwrite", action="store_true", help="Overwrite existing language directory")
     parser.add_argument("--split-per-card", action="store_true", help="Also write one JSON file per card")
     parser.add_argument("--verbose", action="store_true", help="Enable debug-level logging")
     args = parser.parse_args()
@@ -156,7 +164,9 @@ def main():
     try:
         subprocess.run([args.vegapull, "--version"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
     except (FileNotFoundError, OSError) as e:
-        sys.exit(f"vegapull not found/executable ({args.vegapull}). Install with `cargo install vegapull` or pass --vegapull path. Error: {e}")
+        sys.exit(
+            f"vegapull not found/executable ({args.vegapull}). Install with `cargo install vegapull` or pass --vegapull path. Error: {e}"
+        )
 
     if args.language.lower() == "all":
         languages = ["chinese-hongkong", "chinese-taiwan", "english", "french", "english-asia", "japanese", "thai"]
@@ -166,9 +176,10 @@ def main():
     for lang in languages:
         build_language(args, lang)
 
+
 if __name__ == "__main__":
     start_time = time.time()
     main()
     end_time = time.time()
-    elapsed = datetime.fromtimestamp(end_time - start_time, tz=timezone.utc).strftime('%H:%M:%S.%f')[:-3]
+    elapsed = datetime.fromtimestamp(end_time - start_time, tz=timezone.utc).strftime("%H:%M:%S.%f")[:-3]
     logger.info("Built punk-records in %s", elapsed)
