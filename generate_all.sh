@@ -9,7 +9,7 @@ if [ ! -f build_punk_records.py ]; then
 fi 
 
 # Run the build script for each language
-for lang in english french chinese-hongkong chinese-taiwan english-asia thai; do
+for lang in english french chinese-hongkong chinese-taiwan english-asia japanese thai; do
     echo "Generating data for language: $lang"
     python build_punk_records.py --language $lang --out-dir . --split-per-card
 done
