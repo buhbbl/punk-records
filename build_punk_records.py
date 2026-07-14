@@ -110,6 +110,7 @@ def build_language(args, lang):
                 "types": card.get("types"),
                 "attributes": card.get("attributes"),
                 "rarity": card.get("rarity"),
+                "img_url": card.get("img_full_url"),
                 "keywords": extract_effect_keywords(card.get("effect", "")),
             }
             key = (card.get("name") or "").strip().lower()
